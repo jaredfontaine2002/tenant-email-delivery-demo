@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}TenantPost — tenant email delivery prototype for tour-operator CRMs{% endblock %}
+{% block content %}
+<section class="hero">
+  <p class="eyebrow">Working prototype · work sample</p>
+  <h1>CRM email that lands in the inbox, not the spam folder</h1>
+  <p class="lede">A customer-management platform for small tour operators lives or
+  dies on email: enquiries, quotes, itineraries and information packs all travel
+  by email. When tenant messages are flagged as spam, the platform's core feature
+  is broken. This demo prototypes the fix — the two ways a tenant can send, and
+  the diagnostics that show whether either of them will actually deliver.</p>
+  <div class="hero-cta">
+    <a class="btn primary" href="{{ url_for('checker') }}">Check a domain now</a>
+    <a class="btn" href="{{ url_for('wizard') }}">Set up a sending domain</a>
+  </div>
+</section>
+
+<section class="grid two">
+  <article class="card option-card">
+    <p class="card-kicker">Option one · integrated</p>
+    <h2>Tenants send from their own domain</h2>
+    <p>The tenant adds three DNS records — SPF, DKIM and DMARC — and the platform
+    sends as <em>bookings@theirtourcompany.com</em>, fully authenticated. This is
+    the scalable, deliverable lane: authentication aligns with the visible From
+    domain, so DMARC passes and inbox placement follows.</p>
+    <p><a href="{{ url_for('wizard') }}">Open the setup wizard →</a> it generates
+    the exact records and then verifies them against live DNS.</p>
+  </article>
+
+  <article class="card option-card">
+    <p class="card-kicker">Option two · no integration</p>
+    <h2>Tenants send from any address</h2>
+    <p>“Just let me use my Gmail address” sounds simple and is the lane that lands
+    in spam — unless it is done the one legitimate way: sending through the
+    tenant's own connected mailbox (Google / Microsoft OAuth).</p>
+    <p><a href="{{ url_for('option_two') }}">Read the design →</a> why the naive
+    version fails SPF/DKIM alignment, and the architecture that works instead.
+    Labelled honestly: a design, not a working feature.</p>
+  </article>
+</section>
+
+<section class="grid three">
+  <article class="card tool-card">
+    <h3>Domain setup wizard</h3>
+    <p>Enter a tenant domain and get the exact SPF, DKIM and DMARC records to
+    publish — then watch the wizard check live DNS to see what is already in
+    place.</p>
+    <a class="btn small" href="{{ url_for('wizard') }}">Try the wizard</a>
+  </article>
+  <article class="card tool-card">
+    <h3>Deliverability checker</h3>
+    <p>A plain-English report card for any domain: SPF, DKIM, DMARC and MX,
+    checked live, each graded pass / warn / fail with what it means for spam
+    placement.</p>
+    <a class="btn small" href="{{ url_for('checker') }}">Run a check</a>
+  </article>
+  <article class="card tool-card">
+    <h3>Test send</h3>
+    <p>A send form wired to the ZeptoMail API. With a provider key configured it
+    sends for real and shows the API's answer; without one it says so plainly
+    and shows the exact request it would make. Nothing is ever faked.</p>
+    <a class="btn small" href="{{ url_for('test_send') }}">Open test send</a>
+  </article>
+</section>
+
+<section class="card stack-card">
+  <h3>About this prototype</h3>
+  <p>Built with Python and Flask, <code>dnspython</code> for live DNS lookups and
+  the ZeptoMail transactional API — mirroring the server side of a typical
+  tour-operator CRM stack (the production system this is modelled on pairs a
+  React front end with a Python/Flask back end and Postgres). The tools here are
+  deliberately stateless: no database, no accounts, nothing stored. It was built
+  from the tenant's chair — by someone who runs a self-guided cycling tour
+  company and answers to the same spam folder.</p>
+</section>
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Test send — TenantPost{% endblock %}
+{% block content %}
+<section class="page-head">
+  <p class="eyebrow">Option one · sending</p>
+  <h1>Test send</h1>
+  <p class="lede">This form is wired to the ZeptoMail transactional API
+  (<code>POST https://api.zeptomail.com/v1.1/email</code>) — the same provider
+  pattern the wizard's DNS records set up.</p>
+</section>
+
+{% if not configured %}
+<div class="notice notice-warn">
+  <strong>Send lane not configured in this demo instance.</strong>
+  No <code>ZEPTOMAIL_API_KEY</code> has been provided in the environment, so
+  <em>no email will be sent</em>. Submit the form to see the exact API request
+  that would be made with a key configured — this page never fakes a
+  successful send.
+</div>
+{% else %}
+<div class="notice notice-ok">
+  <strong>Send lane configured.</strong> A ZeptoMail API key is present in the
+  environment, so submitting this form sends a real email via the ZeptoMail API
+  and shows the API's real response.
+</div>
+{% endif %}
+
+<form class="send-form card" method="post" action="{{ url_for('test_send') }}">
+  <div class="field-grid">
+    <div class="field">
+      <label for="from_name">From name</label>
+      <input type="text" id="from_name" name="from_name" placeholder="Sunny Cycle Tours"
+             value="{{ form.from_name }}">
+    </div>
+    <div class="field">
+      <label for="from_address">From address (on a verified tenant domain)</label>
+      <input type="email" id="from_address" name="from_address"
+             placeholder="bookings@mail.sunnycycletours.com" value="{{ form.from_address }}" required>
+    </div>
+    <div class="field">
+      <label for="to_address">To address</label>
+      <input type="email" id="to_address" name="to_address"
+             placeholder="you@example.com" value="{{ form.to_address }}" required>
+    </div>
+    <div class="field">
+      <label for="subject">Subject</label>
+      <input type="text" id="subject" name="subject"
+             placeholder="Your self-guided tour itinerary" value="{{ form.subject }}" required>
+    </div>
+    <div class="field field-wide">
+      <label for="body">Message body (plain text)</label>
+      <textarea id="body" name="body" rows="7"
+                placeholder="Hi! Your route pack, GPX files and hotel list are attached…">{{ form.body }}</textarea>
+    </div>
+  </div>
+  <button class="btn primary" type="submit">
+    {{ 'Send via ZeptoMail' if configured else 'Preview the API request' }}
+  </button>
+</form>
+
+{% if payload_preview %}
+<section class="card">
+  <h2>Not sent — this is the request that would be made</h2>
+  <p>With <code>ZEPTOMAIL_API_KEY</code> set, the app would issue exactly this
+  call (the key itself travels in the <code>Authorization</code> header and is
+  never shown). Configure a key and the same form sends for real.</p>
+  <pre class="payload">{{ payload_preview }}</pre>
+</section>
+{% endif %}
+
+{% if result %}
+<section class="card">
+  <h2>{{ 'ZeptoMail accepted the message' if result.ok else 'The send did not succeed' }}</h2>
+  {% if result.status_code %}<p>HTTP status: <strong>{{ result.status_code }}</strong></p>{% endif %}
+  <p>This is the API's real response, shown as returned:</p>
+  <pre class="payload">{{ result.body }}</pre>
+</section>
+{% endif %}
+{% endblock %}

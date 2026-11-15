@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Domain setup wizard — TenantPost{% endblock %}
+{% block content %}
+<section class="page-head">
+  <p class="eyebrow">Option one · own-domain sending</p>
+  <h1>Domain setup wizard</h1>
+  <p class="lede">This is the onboarding flow a tenant would follow to send CRM
+  email from their own domain through a ZeptoMail-style provider. Enter the
+  tenant's domain: the wizard generates the exact DNS records to publish, then
+  checks live DNS to show what is already in place.</p>
+</section>
+
+<form class="domain-form" method="post" action="{{ url_for('wizard') }}">
+  <label for="domain">Tenant domain</label>
+  <div class="form-row">
+    <input type="text" id="domain" name="domain" placeholder="sunnycycletours.com"
+           value="{{ domain }}" autocomplete="off" spellcheck="false" required>
+    <button class="btn primary" type="submit">Generate records</button>
+  </div>
+  {% if error %}<p class="form-error">{{ error }}</p>{% endif %}
+</form>
+
+{% if generated %}
+<section class="card">
+  <h2>Step 1 — publish these records for {{ generated.sending_subdomain }}</h2>
+  <p>Add these three TXT records at the domain's DNS host. Sending happens from
+  the <strong>{{ generated.sending_subdomain }}</strong> subdomain so the CRM's
+  reputation stays separate from the tenant's everyday mail.</p>
+  <div class="records">
+    {% for record in generated.records %}
+    <div class="record">
+      <p class="record-purpose">{{ record.purpose }}</p>
+      <table class="record-table">
+        <tr><th>Type</th><td>{{ record.type }}</td></tr>
+        <tr><th>Host / Name</th><td><code>{{ record.host }}</code></td></tr>
+        <tr><th>Value</th><td><code class="record-value">{{ record.value }}</code></td></tr>
+      </table>
+      <p class="record-note">{{ record.note }}</p>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="card">
+  <h2>Step 2 — live verification for {{ domain }}</h2>
+  <p>These are real DNS lookups, performed just now — the same checks the
+  platform would run before letting a tenant send. A record the tenant has only
+  just published can take a while to propagate, so “not found yet” right after
+  publishing is normal.</p>
+  <div class="verify-list">
+    {% for row in verification %}
+    <div class="verify-row {{ 'found' if row.found else 'missing' }}">
+      <div class="verify-head">
+        <span class="pill {{ 'pill-pass' if row.found else 'pill-missing' }}">
+          {{ 'Found' if row.found else 'Not found' }}</span>
+        <strong>{{ row.label }}</strong>
+      </div>
+      {% if row.found %}
+        {% for value in row.records_found %}<code class="verify-value">{{ value }}</code>{% endfor %}
+      {% else %}
+        <p class="verify-hint">Expected shape: <code>{{ row.hint }}</code></p>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  <p class="next-step">Want the full diagnosis instead of just presence checks?
+  <a href="{{ url_for('checker') }}">Run {{ domain }} through the deliverability
+  checker →</a></p>
+</section>
+{% endif %}
+{% endblock %}

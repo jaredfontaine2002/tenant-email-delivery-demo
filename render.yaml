@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: tenant-email-delivery-demo
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    healthCheckPath: /healthz
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.3
+      # Optional. Set this in the Render dashboard (it is sync: false, so the
+      # value is never committed to the repo) to enable the live test-send
+      # lane. Without it, the DNS tools work fully and the test-send page
+      # honestly shows its not-configured state.
+      - key: ZEPTOMAIL_API_KEY
+        sync: false

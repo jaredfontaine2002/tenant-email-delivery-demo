@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}TenantPost — email delivery prototype{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="brand" href="{{ url_for('index') }}">
+        <span class="brand-mark">✉</span> TenantPost
+        <span class="brand-tag">prototype</span>
+      </a>
+      <nav class="main-nav">
+        <a href="{{ url_for('wizard') }}"{% if request.endpoint == 'wizard' %} class="active"{% endif %}>Domain setup wizard</a>
+        <a href="{{ url_for('checker') }}"{% if request.endpoint == 'checker' %} class="active"{% endif %}>Deliverability checker</a>
+        <a href="{{ url_for('test_send') }}"{% if request.endpoint == 'test_send' %} class="active"{% endif %}>Test send</a>
+        <a href="{{ url_for('option_two') }}"{% if request.endpoint == 'option_two' %} class="active"{% endif %}>Option two design</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p><strong>Honest labelling:</strong> TenantPost is a working prototype built
+      as a work sample. It is not a production system and is not affiliated with
+      any CRM company. The DNS tools perform live lookups; nothing you enter is
+      stored. The test-send lane only sends real email when a provider API key
+      has been configured by whoever deploys the demo.</p>
+    </div>
+  </footer>
+</body>
+</html>

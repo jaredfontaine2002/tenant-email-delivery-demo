@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Option two design — TenantPost{% endblock %}
+{% block content %}
+<section class="page-head">
+  <p class="eyebrow">Option two · no integration</p>
+  <h1>“Send from any address” — the honest architecture</h1>
+  <p class="lede">Some tenants will not touch DNS. They want to type their usual
+  email address into the CRM and have messages “just send”. This page is a
+  <strong>design, not a working feature</strong> — it explains the one way that
+  lane can work legitimately, and why the obvious implementation is exactly
+  what puts tenant mail in spam today.</p>
+</section>
+
+<section class="card">
+  <h2>The naive version — and why it fails</h2>
+  <p>The tempting implementation is for the CRM's own servers to send mail with
+  <code>From: tenant@gmail.com</code> (or the tenant's own domain) in the header.
+  To the receiving server, that mail is indistinguishable from a forgery:</p>
+
+  <div class="flow flow-bad">
+    <div class="flow-box">CRM server composes mail<br><small>From: tenant@theirtourcompany.com</small></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">Sent from the CRM's IPs<br><small>via the platform's mail service</small></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box danger">Receiver checks alignment<br><small>SPF: sending IP is not in theirtourcompany.com's SPF ✗<br>DKIM: no valid signature for their domain ✗</small></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box danger">DMARC fails<br><small>→ spam folder, or rejected outright</small></div>
+  </div>
+
+  <p>DMARC requires at least one of SPF or DKIM to pass <em>and</em> to align
+  with the visible From domain. A platform cannot mint that alignment for a
+  domain it does not control: it cannot add itself to the tenant's SPF record
+  (that is the DNS step the tenant refused), and it cannot sign DKIM with a key
+  the tenant never published. There is no header trick around this — that is
+  the point of the system.</p>
+</section>
+
+<section class="card">
+  <h2>The legitimate version — send through the tenant's own mailbox</h2>
+  <p>The one route that works: the CRM never pretends to be the tenant's
+  domain. Instead the tenant connects their real mailbox once, and the CRM asks
+  that mailbox to send.</p>
+
+  <div class="flow flow-good">
+    <div class="flow-box">Tenant clicks<br><small>“Connect Gmail / Outlook”</small></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">OAuth consent<br><small>Google / Microsoft sign-in,<br>send-only scope, revocable</small></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">CRM calls the mailbox API<br><small>Gmail API or Microsoft Graph<br>“send as me”</small></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box good">Mail genuinely leaves Google / Microsoft<br><small>SPF ✓ · DKIM ✓ · From aligned ✓</small></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box good">DMARC passes<br><small>→ inbox</small></div>
+  </div>
+
+  <p>Because the message truly originates from the tenant's own provider, the
+  authentication is real rather than imitated: for a Google Workspace or
+  Microsoft 365 tenant, SPF and DKIM align with their custom domain; for a
+  plain gmail.com address, the mail is a genuine Gmail message. Either way the
+  receiver's checks pass honestly.</p>
+
+  <h3>What this design has to carry with it</h3>
+  <ul class="design-notes">
+    <li><strong>Consent and revocation.</strong> OAuth tokens are stored
+    encrypted, scoped to sending only, and the tenant can disconnect at any
+    time — at which point the lane closes, visibly, in the product.</li>
+    <li><strong>Volume ceilings.</strong> Mailbox APIs have daily sending
+    quotas (hundreds to a couple of thousand messages a day, depending on the
+    provider and account). Fine for enquiries and itineraries; not a bulk
+    channel. High-volume tenants graduate to option one.</li>
+    <li><strong>Sent-folder truth.</strong> Messages appear in the tenant's own
+    Sent folder — a feature, not a bug: the tenant's records match what
+    customers received.</li>
+    <li><strong>Provider review.</strong> Google and Microsoft require app
+    verification for mail scopes. That is a one-time platform cost, budgeted
+    in the open rather than discovered mid-build.</li>
+    <li><strong>The honest fallback.</strong> If a tenant will neither publish
+    DNS records nor connect a mailbox, the remaining truthful option is a
+    platform sending domain (e.g. <em>via the platform's own domain</em> with
+    the tenant's name in the display name and replies routed back). It
+    delivers — but it must be labelled as what it is, never dressed up as the
+    tenant's own address.</li>
+  </ul>
+</section>
+{% endblock %}

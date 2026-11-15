@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Deliverability checker — TenantPost{% endblock %}
+{% block content %}
+<section class="page-head">
+  <p class="eyebrow">Diagnostics</p>
+  <h1>Deliverability checker</h1>
+  <p class="lede">Enter any domain and get a plain-English report card on the
+  four things inbox placement depends on: MX, SPF, DKIM and DMARC. Every result
+  below comes from live DNS lookups performed when you submit — nothing is
+  cached or simulated.</p>
+</section>
+
+<form class="domain-form" method="post" action="{{ url_for('checker') }}">
+  <label for="domain">Domain to check</label>
+  <div class="form-row">
+    <input type="text" id="domain" name="domain" placeholder="google.com"
+           value="{{ domain }}" autocomplete="off" spellcheck="false" required>
+    <button class="btn primary" type="submit">Check domain</button>
+  </div>
+  {% if error %}<p class="form-error">{{ error }}</p>{% endif %}
+</form>
+
+{% if report %}
+<section class="card report-card">
+  <div class="report-head">
+    <h2>Report card: {{ report.domain }}</h2>
+    <div class="tally">
+      <span class="pill pill-pass">{{ report.tallies.pass }} pass</span>
+      <span class="pill pill-warn">{{ report.tallies.warn }} warn</span>
+      <span class="pill pill-fail">{{ report.tallies.fail }} fail</span>
+    </div>
+  </div>
+  <p class="verdict">{{ report.verdict }}</p>
+
+  <div class="check-list">
+    {% for check in report.checks %}
+    <div class="check-row status-{{ check.status }}">
+      <div class="check-head">
+        <span class="pill pill-{{ check.status }}">{{ check.status }}</span>
+        <strong>{{ check.name }}</strong>
+      </div>
+      <code class="check-detail">{{ check.detail }}</code>
+      <p class="check-explanation">{{ check.explanation }}</p>
+    </div>
+    {% endfor %}
+  </div>
+
+  <p class="report-note">DKIM note: keys can live under any selector name. This
+  checker probes the common selectors ({{ report.audit.dkim_selectors_checked | join(', ') }});
+  “not found” means not found under those names, not proof a domain never signs.</p>
+</section>
+{% endif %}
+{% endblock %}
